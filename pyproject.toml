@@ -1,0 +1,92 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dedao-notebooklm"
+version = "0.4.0"
+description = "Download purchased Dedao courses, sync them to NotebookLM, and generate AI-friendly exports and PPT decks."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [
+  { name = "dedao-notebooklm contributors" }
+]
+keywords = ["dedao", "notebooklm", "cli", "ppt", "automation"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12"
+]
+dependencies = [
+  "requests>=2.28.0",
+  "click>=8.0.0",
+  "beautifulsoup4>=4.11.0",
+  "markdown>=3.4.0",
+  "PyYAML>=6.0",
+  "python-dotenv>=1.0.0",
+  "playwright>=1.40.0",
+  "patchright>=1.55.0",
+  "httpx>=0.25.0",
+  "notebooklm-py>=0.1.0",
+  "fastapi>=0.115.0",
+  "uvicorn>=0.30.0",
+  "pycryptodome>=3.19.0",
+  "ebooklib>=0.18"
+]
+
+[project.optional-dependencies]
+pdf = [
+  "weasyprint>=59.0",
+  "pdfkit>=1.0.0"
+]
+google = [
+  "google-auth>=2.0.0"
+]
+dev = [
+  "pytest>=7.0.0",
+  "pytest-cov>=4.0.0",
+  "black>=23.0.0",
+  "ruff>=0.1.0"
+]
+
+[project.scripts]
+dedao-nb = "cli:main"
+dedao-api = "api_service:main"
+dedao-course-ppts = "course_ppts:main"
+dedao-migrate-data = "data_migration:main"
+
+[project.urls]
+Homepage = "https://github.com/sgdl08/dedao-notebooklm"
+Repository = "https://github.com/sgdl08/dedao-notebooklm"
+Issues = "https://github.com/sgdl08/dedao-notebooklm/issues"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+py-modules = ["ai_pack", "api_service", "cli", "course_ppts", "course_sync", "data_migration"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
