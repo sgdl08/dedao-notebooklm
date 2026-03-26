@@ -35,6 +35,27 @@ dedao-nb list-courses -n 20
 dedao-nb sync-course <COURSE_ID>
 ```
 
+## 工作流概览
+
+```mermaid
+flowchart TD
+    A[得到账号登录] --> B[dedao-nb list-courses]
+    B --> C[dedao-nb download / sync-course]
+    C --> D[外置数据目录 downloads]
+    D --> E[export-ai-pack]
+    D --> F[course-ppts]
+    C --> G[NotebookLM 上传]
+    E --> H[AI pack: full brief chunks toc]
+    F --> I[外置数据目录 ppts]
+    G --> F
+```
+
+这套默认链路是：
+
+- 得到课程下载到仓库外 `downloads/`
+- 同步后生成 `manifest.json`、`chapter_state.json`、`ai_pack/`
+- 需要演讲稿时再把章节送进 NotebookLM 生成 `pptx`
+
 ## 默认目录设计
 
 代码留在仓库内，数据留在仓库外。
