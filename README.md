@@ -1,5 +1,8 @@
 # dedao-notebooklm
 
+[![CI](https://github.com/sgdl08/dedao-notebooklm/actions/workflows/ci.yml/badge.svg)](https://github.com/sgdl08/dedao-notebooklm/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 下载你已购买的得到课程，整理为 Markdown / AI pack，同步到 NotebookLM，并为章节生成中文演讲稿 PPT。
 
 这个仓库面向三类使用方式：
@@ -14,6 +17,23 @@
 - NotebookLM 上传与课程章节 PPT 生成
 - 数据默认存放在仓库外，便于 GitHub 开源协作和跨设备维护
 - CLI 输出支持 `--json`，便于被自动化工具调用
+
+## 使用边界
+
+- 只适用于你已购买、已授权或已合法导出的内容
+- 仓库提供整理、同步、导出、PPT 生成能力，不提供破解、绕过鉴权或盗版下载能力
+- 默认把课程数据和生成产物放在仓库外，避免误提交到 Git
+
+## 快速开始
+
+```bash
+git clone https://github.com/sgdl08/dedao-notebooklm.git
+cd dedao-notebooklm
+python -m pip install -e .
+dedao-nb login --qrcode
+dedao-nb list-courses -n 20
+dedao-nb sync-course <COURSE_ID>
+```
 
 ## 默认目录设计
 
