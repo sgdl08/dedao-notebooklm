@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+downloads/
+*.log
+.env
+.env.local
+config.json
+.cache/
+ppts/
+outputs/
+tmp/
+test_downloads/
+test_downloads_named/
+test_downloads_pretty/
+self_healing_logs/
+.self_healing_state.json
+notebooks_list.md
+src/dedao_notebooklm.egg-info/
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/

@@ -1,0 +1,22 @@
+requests>=2.28.0
+click>=8.0.0
+beautifulsoup4>=4.11.0
+markdown>=3.4.0
+PyYAML>=6.0
+python-dotenv>=1.0.0
+
+# 浏览器自动化（Notebook LM）
+playwright>=1.40.0
+
+# AES 加密解密（电子书）
+pycryptodome>=3.19.0
+
+# EPUB 生成
+ebooklib>=0.18
+
+# 可选：PDF 生成
+# weasyprint>=59.0
+# pdfkit>=1.0.0
+
+# 可选：Notebook LM 高级功能
+# google-auth>=2.0.0
