@@ -37,6 +37,23 @@ DEFAULT_PAGE_RENDER_CONFIG = {
     "width": 30000,
 }
 
+FALLBACK_PAGE_RENDER_CONFIG = {
+    "density": 1,
+    "direction": 0,
+    "font_name": "pingfang",
+    "font_scale": 1,
+    "font_size": 16,
+    "height": 200000,
+    "line_height": "2em",
+    "margin_bottom": 20,
+    "margin_left": 20,
+    "margin_right": 20,
+    "margin_top": 0,
+    "paragraph_space": "1em",
+    "platform": 1,
+    "width": 60000,
+}
+
 
 class EbookClient(BaseClient):
     """电子书 API 客户端
@@ -241,31 +258,54 @@ class EbookClient(BaseClient):
         """获取电子书分页内容。"""
         logger.debug(f"获取电子书页面：{chapter_id} index={index}")
 
-        data = self._request(
-            "POST",
-            APIEndpoint.EBOOK_PAGES,
-            json={
-                "chapter_id": chapter_id,
-                "count": count,
-                "index": index,
-                "offset": offset,
-                "orientation": 0,
-                "config": DEFAULT_PAGE_RENDER_CONFIG,
-                "token": token,
-            },
-            headers={"Content-Type": "application/json"},
-        )
-
-        payload = self._get_data(data) or {}
-        pages = [
-            EbookPage(
-                page_id=str(page.get("page_id") or page.get("begin_offset") or index),
-                svg=page.get("svg", ""),
-                chapter_id=chapter_id,
-            )
-            for page in payload.get("pages", []) or []
+        attempts = [
+            (DEFAULT_PAGE_RENDER_CONFIG, count),
+            (FALLBACK_PAGE_RENDER_CONFIG, min(count, 20)),
         ]
-        return pages, payload.get("is_end", True)
+
+        last_error: Optional[DedaoAPIError] = None
+        for attempt_index, (render_config, attempt_count) in enumerate(attempts, 1):
+            try:
+                data = self._request(
+                    "POST",
+                    APIEndpoint.EBOOK_PAGES,
+                    json={
+                        "chapter_id": chapter_id,
+                        "count": attempt_count,
+                        "index": index,
+                        "offset": offset,
+                        "orientation": 0,
+                        "config": dict(render_config),
+                        "token": token,
+                    },
+                    headers={"Content-Type": "application/json"},
+                )
+
+                payload = self._get_data(data) or {}
+                pages = [
+                    EbookPage(
+                        page_id=str(page.get("page_id") or page.get("begin_offset") or index),
+                        svg=page.get("svg", ""),
+                        chapter_id=chapter_id,
+                    )
+                    for page in payload.get("pages", []) or []
+                ]
+                return pages, payload.get("is_end", True)
+            except DedaoAPIError as exc:
+                last_error = exc
+                is_engine_error = exc.code == 4000 or "svg generate failed" in str(exc).lower()
+                is_last_attempt = attempt_index == len(attempts)
+                if not is_engine_error or is_last_attempt:
+                    raise
+
+                logger.warning(
+                    "电子书分页渲染失败，回退到兼容配置重试: chapter=%s index=%s error=%s",
+                    chapter_id,
+                    index,
+                    exc,
+                )
+
+        raise last_error or DedaoAPIError("获取电子书页面失败")
 
     def get_all_chapter_pages(
         self,
@@ -298,7 +338,12 @@ class EbookClient(BaseClient):
             if is_end:
                 break
 
-            index += count
+            if not pages:
+                raise DedaoAPIError(
+                    f"电子书分页接口返回空页面但未结束: chapter={chapter_id} index={index}"
+                )
+
+            index += len(pages)
             time.sleep(0.05)
 
         if use_cache and svg_contents:

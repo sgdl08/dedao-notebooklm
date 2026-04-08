@@ -11,7 +11,10 @@ import io
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from dedao.models import Course, Chapter, CourseDetail, EbookCatalog, EbookDetail, EbookInfo
+import dedao.ebook.client as ebook_client_module
+
+from dedao.models import Course, Chapter, CourseDetail, EbookCatalog, EbookDetail, EbookInfo, EbookPage
+from dedao import DedaoAPIError
 from dedao.auth import DedaoAuth
 from dedao.ebook.client import EbookClient
 from dedao.ebook.downloader import EbookDownloader, SemanticBlock, SvgImageItem
@@ -178,6 +181,50 @@ class TestEbookClient:
         assert captured["json"]["config"]["width"] == 30000
         assert pages[0].svg == "abc"
         assert is_end is True
+
+    def test_get_ebook_pages_falls_back_on_engine_error(self, monkeypatch):
+        client = EbookClient(cookie="test=123")
+        captured = []
+
+        def fake_request(method, url, **kwargs):
+            captured.append(kwargs["json"])
+            if len(captured) == 1:
+                raise DedaoAPIError("svg generate failed in engine error!", code=4000)
+            return {"c": {"is_end": True, "pages": [{"page_id": "1", "svg": "abc"}]}}
+
+        monkeypatch.setattr(client, "_request", fake_request)
+        pages, is_end = client.get_ebook_pages("chapter-1", "token-123", count=50)
+
+        assert len(captured) == 2
+        assert captured[0]["config"]["width"] == 30000
+        assert captured[0]["count"] == 50
+        assert captured[1]["config"]["width"] == 60000
+        assert captured[1]["count"] == 20
+        assert pages[0].svg == "abc"
+        assert is_end is True
+
+    def test_get_all_chapter_pages_advances_by_returned_page_count(self, monkeypatch):
+        client = EbookClient(cookie="test=123")
+        requested_indexes = []
+        responses = [
+            ([EbookPage(page_id=str(i), svg=f"enc-{i}", chapter_id="chapter-1") for i in range(20)], False),
+            ([EbookPage(page_id=str(i), svg=f"enc-{i}", chapter_id="chapter-1") for i in range(20, 40)], False),
+            ([EbookPage(page_id=str(i), svg=f"enc-{i}", chapter_id="chapter-1") for i in range(40, 45)], True),
+        ]
+
+        def fake_get_ebook_pages(chapter_id, token, index=0, count=20, offset=0):
+            requested_indexes.append((index, count))
+            return responses.pop(0)
+
+        monkeypatch.setattr(client, "get_ebook_pages", fake_get_ebook_pages)
+        monkeypatch.setattr(ebook_client_module, "decrypt_ebook_content", lambda value: f"svg:{value}")
+
+        pages = client.get_all_chapter_pages("ebook-1", "chapter-1", "token-123", use_cache=False)
+
+        assert requested_indexes == [(0, 50), (20, 50), (40, 50)]
+        assert len(pages) == 45
+        assert pages[0] == "svg:enc-0"
+        assert pages[-1] == "svg:enc-44"
 
 
 class TestEbookDownloader:
