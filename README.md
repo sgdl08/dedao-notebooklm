@@ -1,163 +1,103 @@
-# dedao-downloader
+# dedao-notebooklm
 
-下载 [得到](https://www.dedao.cn) 专栏课程的工具。
+下载得到已购课程与电子书，并导出为 Markdown、HTML、EPUB 的命令行工具。仓库中还保留了若干 NotebookLM 相关辅助脚本，位于 extras 目录。
 
-## 功能特性
+## 当前能力
 
-- 📚 下载已购专栏课程（文字内容）
-- 🎧 支持下载音频文件（可选）
-- 📝 自动转换 HTML 为 Markdown 格式
-- ⚡ 支持并发下载
-- 🔐 本地保存认证信息
+- 下载已购课程正文，支持 Markdown、HTML、TXT 输出
+- 按需下载课程音频
+- 下载已购电子书，支持 Markdown、HTML、EPUB 输出
+- 将电子书 SVG 页面转换为结构化 Markdown / NotebookLM HTML
+- 本地保存登录 Cookie，默认写入用户目录而不是仓库目录
 
-## 快速开始
-
-### 安装
+## 安装
 
 ```bash
-# 克隆项目
-git clone https://github.com/your-username/dedao-notebooklm.git
+git clone https://github.com/sgdl08/dedao-notebooklm.git
 cd dedao-notebooklm
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 或者使用 pyproject.toml 安装
-pip install -e .
+python3 -m pip install -e .
 ```
 
-### 获取 Cookie
-
-1. 访问 [https://www.dedao.cn](https://www.dedao.cn) 并登录
-2. 按 `F12` 打开开发者工具
-3. 切换到 **Network** 标签
-4. 刷新页面
-5. 点击任意 API 请求
-6. 在 **Request Headers** 中找到 `Cookie` 值并复制
-
-### 使用
+开发环境：
 
 ```bash
-# 登录得到
-dedao-nb login
+python3 -m pip install -e ".[dev]"
+```
 
+## 登录
+
+先从浏览器开发者工具中获取得到站点请求头里的 Cookie，然后执行：
+
+```bash
+dedao-nb login --cookie "your-cookie"
+```
+
+当前 CLI 保留了 `--qrcode` 参数，但实现尚未启用；公开使用时应以 Cookie 登录为准。
+
+## 常用命令
+
+```bash
 # 列出已购课程
-dedao-nb list-courses
+dedao-nb list-courses --limit 20
 
-# 下载课程
-dedao-nb download <COURSE_ID>
+# 下载课程正文
+dedao-nb download <COURSE_ID> --format md
 
-# 下载课程到指定目录
-dedao-nb download <COURSE_ID> -o ./my-courses
+# 下载课程并附带音频
+dedao-nb download <COURSE_ID> --audio --format md
 
-# 下载时不包含音频
-dedao-nb download <COURSE_ID> --no-audio
+# 下载电子书，参数可传 ID、enid 或标题
+dedao-nb download-ebook "<EBOOK_ID_OR_TITLE>" --format md
+
+# 查看当前配置
+dedao-nb config-list
 ```
 
-## 命令行帮助
+## 配置与安全
 
-```
-Usage: dedao-nb [OPTIONS] COMMAND [ARGS]...
+默认配置文件路径：`~/.dedao-notebooklm/config.json`
 
-  得到课程下载工具
-
-Options:
-  -c, --config PATH  配置文件路径
-  -v, --verbose      显示详细日志
-  --help             显示帮助信息
-
-Commands:
-  login           登录得到网站
-  list-courses    列出已购课程
-  download        下载课程到本地
-  config-set      设置配置项
-  config-get      获取配置项
-  config-list     列出所有配置
-```
-
-## 项目结构
-
-```
-dedao-notebooklm/
-├── src/
-│   ├── cli.py                 # 命令行入口
-│   ├── dedao/
-│   │   ├── __init__.py
-│   │   ├── auth.py            # 认证模块
-│   │   ├── client.py          # 得到 API 客户端
-│   │   ├── models.py          # 数据模型
-│   │   └── downloader.py      # 下载器
-│   ├── converter/
-│   │   ├── __init__.py
-│   │   └── html_to_md.py      # HTML 转 Markdown
-│   └── utils/
-│       ├── __init__.py
-│       └── config.py          # 配置管理
-├── tests/
-├── requirements.txt
-├── pyproject.toml
-└── README.md
-```
-
-## 配置
-
-配置文件位于 `~/.dedao-notebooklm/config.json`
+示例：
 
 ```json
 {
   "dedao_cookie": "your-dedao-cookie",
   "download_dir": "./downloads",
-  "max_workers": 5,
-  "download_audio": true,
-  "log_level": "INFO"
+  "max_workers": 5
 }
 ```
 
-## 输出格式
+仓库中的 `downloads/`、`outputs/`、`config.json`、`.env` 等目录或文件已在 `.gitignore` 中排除，避免把下载产物和本地凭据直接提交到 Git。
 
-下载的课程将保存到以下结构：
+## 项目结构
 
+```text
+dedao-notebooklm/
+├── src/
+│   ├── cli.py
+│   ├── converter/      # HTML / SVG / EPUB 转换
+│   ├── dedao/          # API 客户端、认证、缓存、课程/电子书下载
+│   ├── merger/         # 专栏合并工具
+│   └── utils/          # 配置、浏览器、ffmpeg 等工具
+├── extras/             # NotebookLM 相关辅助脚本
+├── scripts/            # 批量下载与自愈脚本
+└── tests/
 ```
-downloads/
-└── 课程标题/
-    ├── 001_第一章标题.md
-    ├── 002_第二章标题.md
-    ├── 003_第三章标题.mp3
-    └── ...
-```
-
-## 注意事项
-
-1. **API 稳定性**: 得到 API 是非公开的，可能随网站更新而变化
-2. **Cookie 安全**: 请妥善保管 Cookie，不要泄露给他人
-3. **版权**: 下载的内容仅供个人学习使用，请勿传播
 
 ## 开发
 
 ```bash
-# 安装开发依赖
-pip install -e ".[dev]"
-
-# 运行测试
-pytest
-
-# 代码格式化
-black src/
-ruff check src/
+python3 -m pytest tests/ -v
+python3 -m black src/
+python3 -m ruff check src/
 ```
 
-## 依赖
+## 使用边界
 
-- `requests` - HTTP 请求
-- `click` - 命令行框架
-- `beautifulsoup4` - HTML 解析
-- `markdown` - Markdown 处理
-- `PyYAML` - YAML 支持
+1. 得到 API 属于非公开接口，站点更新可能导致功能失效。
+2. Cookie 属于敏感凭据，应仅保存在本机，必要时及时轮换。
+3. 下载内容应仅用于个人学习，请遵守版权与平台使用条款。
 
-## 许可证
+## 许可证状态
 
-MIT License
-
-## 免责声明
-
-本工具仅供学习交流使用，请支持正版内容。使用本工具下载的内容请遵守相关法律法规和使用条款。
+当前仓库尚未附带 LICENSE 文件。若要以开源方式对外分发，请先补充明确的许可证文本。

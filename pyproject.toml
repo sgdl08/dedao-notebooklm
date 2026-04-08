@@ -5,19 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dedao-notebooklm"
 version = "0.1.0"
-description = "下载得到专栏课程并上传到 Google Notebook LM"
+description = "下载得到课程与电子书，并导出为 Markdown、HTML、EPUB"
 readme = "README.md"
-license = {text = "MIT"}
 requires-python = ">=3.8"
-authors = [
-    {name = "Your Name", email = "your.email@example.com"}
-]
 keywords = ["dedao", "notebooklm", "download", "converter"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
@@ -61,9 +56,9 @@ dev = [
 dedao-nb = "cli:main"
 
 [project.urls]
-Homepage = "https://github.com/your-username/dedao-notebooklm"
-Repository = "https://github.com/your-username/dedao-notebooklm"
-Issues = "https://github.com/your-username/dedao-notebooklm/issues"
+Homepage = "https://github.com/sgdl08/dedao-notebooklm"
+Repository = "https://github.com/sgdl08/dedao-notebooklm"
+Issues = "https://github.com/sgdl08/dedao-notebooklm/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
