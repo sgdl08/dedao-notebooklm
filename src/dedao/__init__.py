@@ -3,11 +3,9 @@
 提供得到 App 内容的下载功能。
 
 主要组件：
-- BaseClient: 基础客户端
-- course: 课程模块
-- ebook: 电子书模块
-- audiobook: 有声书模块
-- dedao_dl: dedao-dl 工具封装
+- BaseClient: 基础 HTTP 客户端
+- course: 课程模块 (CourseClient, CourseDownloader)
+- ebook: 电子书模块 (EbookClient, EbookDownloader)
 """
 
 # 基础类
@@ -28,26 +26,12 @@ from .models import (
     EbookChapter,
     EbookPage,
     EbookInfo,
-    ChannelPerson,
-    ChannelStatistics,
-    ChannelInfo,
-    ChannelCategory,
-    ChannelNote,
-    ChannelHomepage,
-    Topic,
-    TopicNote,
-    TopicDetail,
-    ContentCategory,
-    FreeContent,
 )
 
 # 缓存
 from .cache import (
     Cache,
     get_cache,
-    cache_get,
-    cache_set,
-    cache_delete,
     CachePrefix,
     CacheTTL,
 )
@@ -62,25 +46,15 @@ from .account import (
     get_current_token,
 )
 
-# dedao-dl 工具封装
-from .dedao_dl import (
-    DedaoDLTool,
-    DedaoDLResult,
-    get_dedao_dl_tool,
-    check_dl_tool,
-    sync_cookies,
-)
-
-# 子模块导入
+# 子模块
 from . import course
 from . import ebook
-from . import audiobook
 
 # 常用类（便捷导入）
 from .course import CourseClient, DedaoClient, CourseDownloader, download_course
 from .ebook import EbookClient, EbookDownloader, download_ebook
 
-# 向后兼容：保留旧的导入路径
+# 向后兼容
 Category = ContentType
 
 
@@ -93,42 +67,22 @@ __all__ = [
     "DedaoAuth",
     "get_cookie_from_chrome",
     "ContentType",
-    "Category",  # 向后兼容
+    "Category",
     "APIEndpoint",
-
     # 数据模型
     "Course",
     "Chapter",
     "CourseDetail",
-    "Audiobook",
-    "AudiobookChapter",
-    "AudiobookDetail",
     "EbookCatalog",
     "EbookDetail",
     "EbookChapter",
     "EbookPage",
     "EbookInfo",
-    "ChannelPerson",
-    "ChannelStatistics",
-    "ChannelInfo",
-    "ChannelCategory",
-    "ChannelNote",
-    "ChannelHomepage",
-    "Topic",
-    "TopicNote",
-    "TopicDetail",
-    "ContentCategory",
-    "FreeContent",
-
     # 缓存
     "Cache",
     "get_cache",
-    "cache_get",
-    "cache_set",
-    "cache_delete",
     "CachePrefix",
     "CacheTTL",
-
     # 账户管理
     "Account",
     "AccountManager",
@@ -136,19 +90,9 @@ __all__ = [
     "get_current_account",
     "get_current_cookie",
     "get_current_token",
-
-    # dedao-dl 工具
-    "DedaoDLTool",
-    "DedaoDLResult",
-    "get_dedao_dl_tool",
-    "check_dl_tool",
-    "sync_cookies",
-
     # 子模块
     "course",
     "ebook",
-    "audiobook",
-
     # 常用类
     "CourseClient",
     "DedaoClient",

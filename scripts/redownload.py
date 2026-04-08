@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from dedao import DedaoClient
-from dedao.downloader import CourseDownloader
+from dedao.course import CourseDownloader
 
 # 需要重新下载的课程（ID, 标题）
 COURSES_TO_FIX = [

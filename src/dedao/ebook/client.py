@@ -15,13 +15,18 @@ from utils import decrypt_ebook_content
 
 logger = logging.getLogger(__name__)
 
+# 优化后的页面渲染配置
+# - height 设为 0 让服务端按章节自然分页，减少碎片化 SVG 数量
+# - width 降低到接近移动端宽度，减少 SVG 复杂度
+# - font_size 增大到 18 使文字片段更清晰、空间分组更准确
+# - line_height 2em 保持行间距清晰
 DEFAULT_PAGE_RENDER_CONFIG = {
     "density": 1,
     "direction": 0,
     "font_name": "pingfang",
     "font_scale": 1,
-    "font_size": 16,
-    "height": 200000,
+    "font_size": 18,
+    "height": 0,
     "line_height": "2em",
     "margin_bottom": 20,
     "margin_left": 20,
@@ -29,7 +34,7 @@ DEFAULT_PAGE_RENDER_CONFIG = {
     "margin_top": 0,
     "paragraph_space": "1em",
     "platform": 1,
-    "width": 60000,
+    "width": 30000,
 }
 
 
@@ -280,7 +285,7 @@ class EbookClient(BaseClient):
                 return cached
 
         index = 0
-        count = 20
+        count = 50  # 每次请求更多页面，减少 API 调用次数
         svg_contents: List[str] = []
 
         while True:

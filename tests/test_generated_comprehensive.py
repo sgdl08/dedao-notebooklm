@@ -16,8 +16,9 @@ from dedao.models import (
     AudiobookDetail, EbookCatalog, EbookDetail, EbookChapter,
     ChannelInfo, ChannelNote, Topic, TopicNote
 )
-from dedao.auth import DedaoAuth, DedaoQRCodeLogin
-from dedao.client import DedaoClient, DedaoAPIError, Category
+from dedao.auth import DedaoAuth
+from dedao import DedaoClient, DedaoAPIError
+from dedao.constants import ContentType as Category
 
 
 # ==================== 模型测试 ====================
@@ -204,13 +205,13 @@ class TestDedaoClientComprehensive:
     def test_client_initialization(self):
         """测试客户端初始化"""
         client = DedaoClient(cookie="test=123")
-        assert client.is_authenticated() is True
+        assert client.cookie == "test=123"
 
     def test_client_set_cookie(self):
         """测试设置Cookie"""
         client = DedaoClient()
         client.set_cookie("new=cookie")
-        assert client.is_authenticated() is True
+        assert client.cookie == "new=cookie"
 
     def test_api_error_handling(self):
         """测试API错误处理"""

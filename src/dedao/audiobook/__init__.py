@@ -1,19 +1,6 @@
-"""有声书模块
+"""有声书模块（暂未实现）
 
-提供有声书的 API 客户端和下载功能。
+有声书功能计划在后续版本中实现。
 """
 
-# 从旧模块导入（保持向后兼容）
-from .._audiobook_legacy import (
-    AudiobookClient,
-    Audiobook,
-    AudiobookChapter,
-    AudiobookDetail,
-)
-
-__all__ = [
-    "AudiobookClient",
-    "Audiobook",
-    "AudiobookChapter",
-    "AudiobookDetail",
-]
+__all__ = []

@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, List, Optional
 import requests
 
 from converter.ebook_html_to_md import EbookHtmlToMarkdownConverter
+from converter.svg_to_md import SvgToMarkdownRenderer
 
 from .client import EbookClient
 from ..models import EbookChapter, EbookDetail
@@ -116,6 +117,7 @@ class EbookDownloader:
         self._asset_cache: Dict[str, str] = {}
         self._inline_assets: Dict[str, Dict[str, str]] = {}
         self._converter = EbookHtmlToMarkdownConverter(keep_images=True, image_dir="images")
+        self._md_renderer = SvgToMarkdownRenderer()
         self._http = requests.Session()
 
     def _notify_progress(self, stage: str, message: str = "", progress: float = 0.0):
@@ -475,14 +477,31 @@ class EbookDownloader:
         text = line.text.strip()
         if not text:
             return 0
+
+        # 严格的中文章节模式 → h2
         if re.match(r"^第[〇零一二三四五六七八九十百千万\d]+[章节部篇卷]", text):
             return 2
+
+        # 严格的 "Part X" 模式 → h2
+        if re.match(r"^(?:Part|PART)\s+[IVXLC\d]+", text):
+            return 2
+
+        # 字号 + 中心 + 短文本 → h2（书名级/大标题）
         if line.max_font_size >= 26 and line.centered and len(text) <= 36:
             return 2
+
+        # 字号 ≥ 20, 居中或加粗, 短文本 → h3（章节标题）
         if line.max_font_size >= 20 and (line.centered or line.bold) and len(text) <= 42:
             return 3
+
+        # 字号 ≥ 17, 加粗, 短文本 → h4（小节标题）
         if line.max_font_size >= 17 and line.bold and len(text) <= 48:
             return 4
+
+        # 中文数字小节模式: "一、xxx" "（一）xxx"
+        if re.match(r"^[（(]?[一二三四五六七八九十]+[）)]?[、.．]\s*\S", text) and len(text) <= 40:
+            return 4
+
         return 0
 
     @staticmethod
@@ -1047,6 +1066,31 @@ class EbookDownloader:
         parts.extend(["</body>", "</html>"])
         return "\n".join(parts)
 
+    def _render_chapter_markdown(self, book_dir: Path, chapter: EbookChapter) -> str:
+        """直接将章节 SVG 渲染为 Markdown（跳过 HTML 中间层）。"""
+        images_dir = book_dir / "images"
+        images_dir.mkdir(parents=True, exist_ok=True)
+
+        blocks: List[SemanticBlock] = []
+        for page_index, svg in enumerate(chapter.svg_contents, 1):
+            blocks.extend(self._render_page_blocks(svg, images_dir, chapter.title, page_index))
+        blocks = self._trim_leading_title_blocks(chapter.title, blocks)
+        blocks = self._drop_duplicate_heading_blocks(chapter.title, blocks)
+
+        # 使用 SvgToMarkdownRenderer 直接渲染
+        self._md_renderer._inline_assets = self._inline_assets
+        chapter_title = None if self._looks_like_raw_chapter_id(chapter.title) else chapter.title
+
+        # 为章节添加一个 h2 标题块
+        chapter_blocks = []
+        if chapter_title:
+            chapter_blocks.append(SemanticBlock(kind="heading", y=0, text=chapter_title, level=2))
+        chapter_blocks.extend(blocks)
+
+        md = self._md_renderer.render(chapter_blocks)
+        chapter.markdown_content = md
+        return md
+
     def _write_markdown(
         self,
         book_dir: Path,
@@ -1054,10 +1098,33 @@ class EbookDownloader:
         ebook: EbookDetail,
         chapters: List[EbookChapter],
     ) -> List[Path]:
-        html = self._build_html_document(book_dir, ebook, chapters, embed_assets=False)
-        lines = [self._converter.convert(html).strip(), ""]
+        # 直接 SVG→MD：每章独立渲染，最后合并
+        all_blocks: List[SemanticBlock] = []
+        images_dir = book_dir / "images"
+        images_dir.mkdir(parents=True, exist_ok=True)
+
+        for chapter in chapters:
+            # 添加章节标题
+            if not self._looks_like_raw_chapter_id(chapter.title):
+                all_blocks.append(SemanticBlock(kind="heading", y=0, text=chapter.title, level=2))
+            for page_index, svg in enumerate(chapter.svg_contents, 1):
+                page_blocks = self._render_page_blocks(svg, images_dir, chapter.title, page_index)
+                page_blocks = self._trim_leading_title_blocks(chapter.title, page_blocks)
+                page_blocks = self._drop_duplicate_heading_blocks(chapter.title, page_blocks)
+                all_blocks.extend(page_blocks)
+
+        self._md_renderer._inline_assets = self._inline_assets
+        md = self._md_renderer.render(
+            all_blocks,
+            title=ebook.title,
+            author=ebook.author,
+            intro=ebook.book_intro,
+        )
+
         output_path = book_dir / f"{filename}.md"
-        output_path.write_text("\n".join(lines), encoding="utf-8")
+        output_path.write_text(md, encoding="utf-8")
+
+        # 同时生成 HTML 版本用于 NotebookLM（保持原逻辑）
         notebooklm_html = book_dir / f"{filename}.notebooklm.html"
         notebooklm_html.write_text(
             self._build_html_document(book_dir, ebook, chapters, embed_assets=True),

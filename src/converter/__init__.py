@@ -16,6 +16,7 @@ from .ebook_html_to_md import (
     convert_ebook_html_to_markdown,
     convert_ebook_html_file,
 )
+from .svg_to_md import SvgToMarkdownRenderer
 
 __all__ = [
     "HTMLToMarkdownConverter",
@@ -29,4 +30,6 @@ __all__ = [
     "EbookHtmlToMarkdownConverter",
     "convert_ebook_html_to_markdown",
     "convert_ebook_html_file",
+    # SVG 直转 Markdown
+    "SvgToMarkdownRenderer",
 ]

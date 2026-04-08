@@ -11,7 +11,7 @@ from typing import Optional, List
 import click
 
 from dedao import DedaoAPIError, DedaoClient, EbookDownloader
-from dedao.downloader import CourseDownloader
+from dedao.course import CourseDownloader
 from converter import HTMLToMarkdownConverter
 from utils import get_config, load_config, Config
 from merger import ArticleMerger

@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from dedao import DedaoClient, DedaoAPIError
-from dedao.downloader import CourseDownloader
+from dedao.course import CourseDownloader
 
 # 配置日志
 logging.basicConfig(
